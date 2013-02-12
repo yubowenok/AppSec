@@ -1,0 +1,5 @@
+ALLOC a[1]
+SET a[0] 1
+PRT a[0]
+INC a[0]
+DEC a[0]
