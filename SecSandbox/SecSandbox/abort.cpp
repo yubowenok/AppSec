@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 #include "sandbox.h"
 
 // abort with error
