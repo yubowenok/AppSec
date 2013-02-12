@@ -4,8 +4,9 @@
 void Sandbox::parse(){
 	Inst *pinst;
 	int lineNum = 1;
+	int jmplineNum = 0;
 	int maxLineNum = 0; // maximum line number that has been ever reached
-	string nameinst, namevar1, namevar2;
+	string nameinst, namejpt, namevar1, namevar2;
 	string var1, var2;
 	Var *pvar1, *pvar2;
 
@@ -13,21 +14,24 @@ void Sandbox::parse(){
 		maxLineNum = lineNum>maxLineNum? lineNum:maxLineNum;
 		if(maxLineNum>=MAXLINE) errAbort(Error_LineLimitExceeded);	// exceed maximum number of lines allowed
 
-		pinst = new Inst(lineNum);
-		ivec.push_back(pinst);
-
-		// set the current instruction to enable error logging
-		curInst = pinst;
-
 		stringstream ss(stringstream::in | stringstream::out);
-		if(lineNum==maxLineNum){
+		if(lineNum>(int)ivec.size()-1){	
+			// check ivec.size(): attempt to read a line that has not been processed yet
 			// read new line from program file
+
+			// encounters the end of the program, no more instructions, finish parsing
+			if(fp.eof()){
+				break;
+			}
 
 			// read a program line into the buffer
 			fp.getline(buf, BUFSIZE);
 			if(fp.fail()){
 				errAbort(Error_LineTooLong);
 			}
+
+			pinst = new Inst(lineNum);
+			ivec.push_back(pinst);
 
 			// scan from left to right to identify the instruction
 			pinst->setText(string(buf));
@@ -38,9 +42,29 @@ void Sandbox::parse(){
 			ss << pinst->text();
 		}
 
+		// clear last instruction
+		nameinst = "";
+
+		// reset to no jump
+		jmplineNum = 0;	
+
+		// set the current instruction to enable error logging
+		curInst = pinst;
+
 		// parse instruction type
 		ss >> nameinst;
-		pinst->setType(parseInst(nameinst));
+		removePrefixSpace(nameinst);
+		if(nameinst=="" || (nameinst.length()>=2 && nameinst.substr(0,2)=="//") ) pinst->setType(Inst_CMT);
+		else{
+			for(int i=0; i<nameinst.length(); i++){
+				// change to upper case for instructions
+				char c = nameinst[i];
+				if(c>='a' && c<='z'){
+					nameinst[i] = toupper(c);
+				}
+			}
+			pinst->setType(parseInst(nameinst));
+		}
 
 		// parse variables
 		switch(pinst->type()){
@@ -108,19 +132,53 @@ void Sandbox::parse(){
 			*pConst = 1;
 			sub(pvar1, pvarConst);
 			break;
-		case Inst_JMP:
-			break;
 		case Inst_JPT:
+			ss >> namejpt;
+			jumppoint(namejpt, lineNum);
+			break;
+		case Inst_JMP:
+			ss >> namejpt;
+			jump(namejpt);
 			break;
 		case Inst_JE:
+			ss >> namejpt >> namevar1 >> namevar2;
+			pvar1 = getVar(namevar1);
+			pvar2 = getVar(namevar2);
+			pinst->setVar1(namevar1);
+			pinst->setVar2(namevar2);
+			jmplineNum = jumpe(namejpt, pvar1, pvar2);
 			break;
 		case Inst_JLE:
+			ss >> namejpt >> namevar1 >> namevar2;
+			pvar1 = getVar(namevar1);
+			pvar2 = getVar(namevar2);
+			pinst->setVar1(namevar1);
+			pinst->setVar2(namevar2);
+			jmplineNum = jumple(namejpt, pvar1, pvar2);
 			break;
 		case Inst_JL:
+			ss >> namejpt >> namevar1 >> namevar2;
+			pvar1 = getVar(namevar1);
+			pvar2 = getVar(namevar2);
+			pinst->setVar1(namevar1);
+			pinst->setVar2(namevar2);
+			jmplineNum = jumpl(namejpt, pvar1, pvar2);
 			break;
 		case Inst_JGE:
+			ss >> namejpt >> namevar1 >> namevar2;
+			pvar1 = getVar(namevar1);
+			pvar2 = getVar(namevar2);
+			pinst->setVar1(namevar1);
+			pinst->setVar2(namevar2);
+			jmplineNum = jumpge(namejpt, pvar1, pvar2);
 			break;
 		case Inst_JG:
+			ss >> namejpt >> namevar1 >> namevar2;
+			pvar1 = getVar(namevar1);
+			pvar2 = getVar(namevar2);
+			pinst->setVar1(namevar1);
+			pinst->setVar2(namevar2);
+			jmplineNum = jumpg(namejpt, pvar1, pvar2);
 			break;
 		case Inst_PRT:
 			ss >> namevar1;
@@ -135,6 +193,8 @@ void Sandbox::parse(){
 			*pConst = readData();
 			setv(pvar1, pvarConst);
 			break;
+		case Inst_CMT:
+			break;
 		}
 
 		ss.getline(buf, BUFSIZE);	// read the rest of the line
@@ -145,19 +205,18 @@ void Sandbox::parse(){
 			parseComment(cmt);
 		}
 
-
-		// encounters the end of the program, finish parsing
-		if(fp.eof()){
-			break;
+		if(jmplineNum){
+			// non-zero jump line number means a jump instruction has taken effect
+			lineNum = jmplineNum + 1;
+		}else{
+			// no jump, just increase line number
+			lineNum ++;
 		}
-
-		// increase line number
-		lineNum ++;
 	}
 }
 
 // get a variable pointer
-Var *Sandbox::getVar(string name){
+Var *Sandbox::getVar(string name, int depth){
 
 	if(checkInteger(name)){
 		int val = parseInteger(name);
@@ -167,7 +226,7 @@ Var *Sandbox::getVar(string name){
 	string arrayname;
 	int offset;
 	bool isArray = false;
-	if(isArray = checkArray(name, arrayname, offset)){
+	if(isArray = checkArray(name, arrayname, offset, depth)){
 		name = arrayname;
 	}
 	checkValidName(name);	// first check if the name is valid
@@ -191,82 +250,6 @@ InstType Sandbox::parseInst(string name){
 		errAbort(Error_InstNotFound);
 	}
 	return (*rit).second;
-}
-
-// deallocate a variable
-string Sandbox::deallocVar(string name){
-	map<string, Var *>::iterator ri;
-	if((ri=vmap.find(name))==vmap.end()){
-		// variable not exist
-		errAbort(Error_DeallocNull);
-	}
-	string varname = name;
-	checkValidName(varname);
-	Var *pvar = (*ri).second;
-	vmap.erase(ri);
-
-	vector<Var *>::iterator rv, rvf;
-	rv = vvec.begin() + pvar->index();
-	// decrease the indices of the variables in the vector that follow the deallocated variable 
-	for(rvf=rv+1; rvf!=vvec.end(); rvf++){
-		int index = (*rvf)->index();
-		(*rvf)->setIndex(index-1);
-	}
-
-	// free the memory
-	memUsed = (*rv)->len();	
-	freeMem -= (*rv)->len();
-	numVar --;
-	delete *rv;
-	vvec.erase(rv);	// removing an element in a vector is slow, but it's ok if we don't have many variables
-
-	return varname;
-}
-
-// allocate a variable
-string Sandbox::allocVar(string name){
-	map<string, Var *>::iterator ri;
-	if((ri=vmap.find(name))!=vmap.end()){
-		// variable already existing
-		errAbort(Error_Realloc);
-	}
-	string varname;
-
-	int arraylen;
-	string arrayname;
-	bool isArray = false;
-	if(isArray=checkArray(name, arrayname, arraylen)){
-		varname = arrayname;
-	}
-	checkValidName(varname);	// check if the name is valid
-
-	Var *newvar;
-	if(!isArray){
-		// single variable allocation
-		if(memUsed+1>MEMSIZE) errAbort(Error_MemLimitExceeded);	// not enough memory for even one variable
-
-		newvar = new Var(numVar);
-		newvar->setLen(1);
-		newvar->setP(freeMem);
-		freeMem++;
-
-		vvec.push_back(newvar);
-		vmap.insert(make_pair(varname, newvar));
-	}else{
-		// array allocation
-		if(arraylen<=0) errAbort(Error_InvalidArray);	// invalid array length
-		if(memUsed+arraylen>MEMSIZE) errAbort(Error_MemLimitExceeded);	// not enough memory for such large array
-
-		newvar = new Var(numVar);
-		newvar->setLen(arraylen);
-		newvar->setP(freeMem);
-		freeMem+=arraylen;
-
-		vvec.push_back(newvar);
-		vmap.insert(make_pair(varname, newvar));
-	}
-	numVar++;
-	return varname;
 }
 
 // check valid character
@@ -317,7 +300,10 @@ void Sandbox::parseComment(string str){
 }
 
 // check if a variable name reference an array
-bool Sandbox::checkArray(string str, string &arrayname, int &offset){
+bool Sandbox::checkArray(string str, string &arrayname, int &offset, int depth){
+	if(depth==MAXDEPTH) errAbort(Error_MaxRecursive);
+	if(depth==0) 
+		while(!vstk.empty()) vstk.pop();  // clear the var stack
 	bool isArray = false;
 	int i;
 	int l = str.length();
@@ -329,20 +315,17 @@ bool Sandbox::checkArray(string str, string &arrayname, int &offset){
 		}
 		if(c=='['){
 			arrayname = name.substr(0, i);  // get variable name
+			if(name[l-1]!=']') errAbort(Error_InvalidArray);  // mismatch brackets
 			if(!isArray) isArray = true;
-			else errAbort(Error_InvalidArray);  // incorrect '[' follows ']'
-			int j;
-			for(j=i+1; j<l; j++){
-				if(name[j]==']'){
-					string intstr = name.substr(i+1, j-i-1);
-					if(!checkInteger(intstr)) errAbort(Error_InvalidNum);
-					offset = parseInteger(intstr);
-					i = j+1;
-					break;
-				}
-			}
+
+			string intstr = name.substr(i+1, l-1-i-1);
+
+			Var *pvar = getVar(intstr, depth+1);
+			int *p = pvar->p();
+			if(pvar->len()>1) p = pvar->arrayp();
+			offset = *p;
 		}
-		if(i<l) checkValidChar(c);
+		if(isArray) break;
 	}
 	if(isArray) return true;
 	return false;
@@ -379,4 +362,13 @@ int Sandbox::parseInteger(string str){
 	}
 	if(neg) ret = -ret;
 	return ret;
+}
+
+// remove prefix spaces and tabs in a string
+void Sandbox::removePrefixSpace(string &name){
+	int i;
+	for(i=0; i<name.length(); i++){
+		if(name[i]!=' ' && name[i]!='\t') break;
+	}
+	name = name.substr(i);
 }

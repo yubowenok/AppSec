@@ -53,7 +53,7 @@ To compile the sandbox, simply do {\tt make} under the sandbox directory in the 
 To run the sandbox, execute the executable file by {\tt ./SandBox arg1 arg2}, where {\tt arg1} is the name of the script file and {\tt arg2} is the name of the data file. Note that {\tt arg2} can be omitted when the program does not need a data file.\\
 
 \subsection{Sandbox Variables}
-The variables in the sandbox can be single variables or elements of an array. Single variables are referenced by variable names and array elements are referenced by array names plus brackets and element indices, e.g. {\tt myVar[5]}. If the index (numbered from 0) exceeds the array length, the program will stop and report error. The total memory required for all variables and arrays shall not exceed the memory limit, otherwise the program will report error and exit.
+The variables in the sandbox can be single variables or elements of an array. Single variables are referenced by variable names and array elements are referenced by array names plus brackets and element indices, e.g. {\tt myVar[5]}. If the index (numbered from 0) exceeds the array length, the program will stop and report error. You may also embed variables and arrays in the array brackets as the array index, e.g. {\tt a[b[2]]}, as long as the variables that are used for the index already exist. For this case, the sandbox implements a recursive interpretation of array expression and has a maximum recursive reference level of 1000. The total memory required for all variables and arrays shall not exceed the memory limit, otherwise the program will report error and exit.
 
 \subsection{Sandbox Instructions}
 The sandbox supports a set of instructions that provide common functionalities just as any other programming language. The table of the supported statements are listed below. The instructions are {\bf not} case sensitive. Note that each instruction shall be written on a single line in the program file and one instruction shall not exceed 256 characters (usually a line will not be that long except for a malicious script :p), otherwise program will fail. The detailed usage description of each instruction is given following the list.
@@ -83,7 +83,7 @@ RD & Read a value from the program data into a variable or an array element\\ \h
 
 \subsubsection{ALLOC}
 {\bf Usage:} {\tt ALLOC var $|$ ALLOC var[length]}\\
-The variable name {\tt var} must only include letters (a-z, A-Z), numbers (0-9) or underscore `\_' and cannot exceed 32 characters. Variable names must begin with letter. The variable names are case sensitive. Realloc an existing variable will cause error. If there is insufficient memory, the program will stop and report error.
+The variable name {\tt var} must only include letters (a-z, A-Z), numbers (0-9) or underscore `\_' and cannot exceed 32 characters. Variable names must begin with letter. The variable names are case sensitive. Realloc an existing variable will cause error. If there is insufficient memory, the program will stop and report error. It is allowed that the {\tt length} can be specified by variable or array element.
 \subsubsection{DEALLOC}
 {\bf Usage:} {\tt DEALLOC var}\\
 The variable name must match one of an existing variable. Dealloc an non-existing variable will cause error.
@@ -101,10 +101,10 @@ Increase or decrease the variable by one. Note that if the result of the arithme
 Set a jump point named {\tt jname}. The jump point name {\tt jname} must only include letters (a-z, A-Z), numbers (0-9) or underscore `\_' and cannot exceed 32 characters. Jump point names must begin with letter. Set a jump point with an existing jump point name will cause error.
 \subsubsection{JMP}
 {\bf Usage:} {\tt JMP jpoint}\\
-Jump to the jump point specified by jump point name {\tt jpoint} and continue execution. Jump to a undefined jump point is not allowed.
+Jump to the jump point specified by jump point name {\tt jpoint} and continue execution. Jump to a undefined jump point is not allowed. Note that instructions are executed line by line, therefore jumping to a jump point that defined in the future is not allowed.
 \subsubsection{JE/JG/JGE/JL/JLE}
-{\bf Usage:} {\tt JE/JG/JGE/JL/JLE var jpoint}\\
-Check if the variable referenced by {\tt var} satisfy the jump condition. If true, jump to the jump point specified by jump point name {\tt jpoint}. Jump to a undefined jump point is not allowed.
+{\bf Usage:} {\tt JE/JG/JGE/JL/JLE jpoint var1 var2}\\
+Check if the variables referenced by {\tt var1} and {\tt var2} satisfy the jump condition {\tt var1 condition var2}. If true, jump to the jump point specified by jump point name {\tt jpoint}. Jump to a undefined jump point is not allowed. Note that instructions are executed line by line, therefore jumping to a jump point that defined in the future is not allowed.
 \subsubsection{PRT}
 {\bf Usage:} {\tt PRT var}\\
 Print the value of a variable or an array element onto the screen in a single line.

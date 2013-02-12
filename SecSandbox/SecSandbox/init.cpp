@@ -6,14 +6,18 @@ void Sandbox::init(){
 	memUsed = 0;
 	numVar = 0;
 	freeMem = mem;
-	initMap();
+	
 	pConst = new int;
 	pvarConst = new Var();
 	pvarConst->setP(pConst);
+
+	initInstMap();
+
+	ivec.push_back(NULL);	// instruction on line 0 is a placeholder
 }
 
 // initialize the instruction map
-void Sandbox::initMap(){
+void Sandbox::initInstMap(){
 	imap.insert(make_pair("ALLOC", Inst_ALLOC));
 	imap.insert(make_pair("DEALLOC", Inst_DEALLOC));
 	imap.insert(make_pair("SET", Inst_SET));
@@ -32,4 +36,5 @@ void Sandbox::initMap(){
 	imap.insert(make_pair("JGE", Inst_JGE));
 	imap.insert(make_pair("PRT", Inst_PRT));
 	imap.insert(make_pair("RD", Inst_RD));
+	imap.insert(make_pair("//", Inst_CMT));
 }

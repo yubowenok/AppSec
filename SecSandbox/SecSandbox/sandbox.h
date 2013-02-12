@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <stack>
 #include <fstream>
 
 #include "inst.h"
@@ -15,6 +16,7 @@ using namespace std;
 #define BUFSIZE 257
 #define MAXINT 1000000000
 #define MAXLINE 100000
+#define MAXDEPTH 1000
 
 class Sandbox{
 
@@ -49,13 +51,15 @@ private:
 	// const variable, used for constant involved instructions
 	Var *pvarConst;
 	int *pConst;
+	// variable stack used for recursive array reference
+	stack<Var *> vstk;
 
 	// instruction map
 	map<string, InstType> imap;
 	// variable map
 	map<string, Var *> vmap;
-	// jump point map
-	map<string, Inst *> jmap;
+	// jump point map to line number
+	map<string, int> jmap;
 	// instruction list
 	vector<Inst *> ivec;
 	// variable list
@@ -71,11 +75,11 @@ private:
 	void cleanUp();
 
 	// initialize the instruction map
-	void initMap();
+	void initInstMap();
 	// abort with error
 	void errAbort(ErrorType e);
 	// print the instruction along with a line number
-	string Sandbox::printLineInst(Inst *pinst);
+	string printLineInst(Inst *pinst);
 	// print the instruction in a readable format
 	string printInst(Inst *pinst);
 	// print the line number of an instruction
@@ -90,12 +94,12 @@ private:
 	// parse an integer
 	int parseInteger(string str);
 	// find a variable pointer
-	Var *getVar(string name);
+	Var *getVar(string name, int depth=0);
 	
 	// check if the string is an integer
 	bool checkInteger(string str);
 	// check if the string references an array
-	bool checkArray(string str, string &arrayname, int &offset);
+	bool checkArray(string str, string &arrayname, int &offset, int depth=0);
 
 	// arithmetic
 	void setv(Var *pvar1, Var *pvar2);
@@ -105,6 +109,17 @@ private:
 	void div(Var *pvar1, Var *pvar2);
 	void inc(Var *pvar);
 	void dec(Var *pvar);
+
+	// jump
+	// set jump point
+	void jumppoint(string name, int linenum);	
+	// conditional jump returns the line number being jumped to, 0 if condition not satisfied
+	int jump(string name);
+	int jumpe(string name, Var* pvar1, Var* pvar2);
+	int jumpg(string name, Var* pvar1, Var* pvar2);
+	int jumpge(string name, Var* pvar1, Var* pvar2);
+	int jumpl(string name, Var* pvar1, Var* pvar2);
+	int jumple(string name, Var* pvar1, Var* pvar2);
 
 	// print a variable onto the screen
 	void printv(Var *pvar);
@@ -116,6 +131,9 @@ private:
 	void checkValidName(string name);
 	// check valid character
 	void checkValidChar(char c);
+
+	// remove the prefix space and tabs
+	void removePrefixSpace(string &name);
 
 	// read an integer from data
 	int readData();

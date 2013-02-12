@@ -33,6 +33,12 @@
     <ClCompile Include="arithmetic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="alloc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jump.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="data">

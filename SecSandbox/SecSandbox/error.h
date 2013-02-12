@@ -22,7 +22,10 @@ enum ErrorType{
 	Error_VarNotFound,
 	Error_DivideByZero,
 	Error_IndexOutOfRange,
-	Error_NoData
+	Error_NoData,
+	Error_MaxRecursive,
+	Error_JptNotFound,
+	Error_JptDuplicated
 };
 
 

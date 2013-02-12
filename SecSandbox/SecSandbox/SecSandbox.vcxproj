@@ -62,8 +62,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="abort.cpp" />
+    <ClCompile Include="alloc.cpp" />
     <ClCompile Include="arithmetic.cpp" />
     <ClCompile Include="init.cpp" />
+    <ClCompile Include="jump.cpp" />
     <ClCompile Include="sandbox.cpp" />
     <ClCompile Include="parse.cpp" />
     <ClCompile Include="main.cpp" />

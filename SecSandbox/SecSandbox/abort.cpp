@@ -54,6 +54,15 @@ void Sandbox::errAbort(ErrorType e){
 	case Error_NoData:
 		cout << "Data is empty upon reading " << printLineInst(curInst) << endl;
 		break;
+	case Error_MaxRecursive:
+		cout << "Maximum recursive level exceeded " << printLineInst(curInst) << endl;
+		break;
+	case Error_JptNotFound:
+		cout << "Jump point not found " << printLineInst(curInst) << endl;
+		break;
+	case Error_JptDuplicated:
+		cout << "Jump point duplicated " << printLineInst(curInst) << endl;
+		break;
 	default:
 		cout << "Unknown error" << endl;
 	}
