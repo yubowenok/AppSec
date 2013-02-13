@@ -1,6 +1,6 @@
 ALLOC num
 SET num 10	// init to 10
 JPT loop
-PRT num		// output onto the screen
-DEC num
+	PRT num		// output onto the screen
+	DEC num
 JGE loop num 1	// count down to 1

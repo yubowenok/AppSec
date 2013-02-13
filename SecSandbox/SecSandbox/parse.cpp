@@ -221,15 +221,18 @@ void Sandbox::parse(){
 
 		ss.getline(buf, BUFSIZE);	// read the rest of the line
 		if(!ss.eof()){
-			// not the end of line, then deal with the tailing text
+			// not the end of line, then check if tailing text is too long
 			if(ss.fail()) errAbort(Error_LineTooLong);
+		}
+		if(pinst->type()!=Inst_CMT){
+			// deal with the tailing text
 			string cmt(buf);
 			parseComment(cmt);
 		}
 
 		if(jmplineNum!=JUMPNCON){
 			// a jump instruction has taken effect
-			if(jmplineNum<0){
+			if(jmplineNum<=0){
 				errAbort(Error_InvalidJump);
 			}
 
@@ -386,7 +389,7 @@ int Sandbox::parseInteger(string str){
 		ie = 1;
 	}
 	int b = 1;
-	if(str.length()>10) errAbort(Error_UnboundedNum); 
+	if(str.substr(1).length()>10) errAbort(Error_UnboundedNum); 
 	for(int i=str.length()-1; i>=ie; i--){
 		char c = str[i];
 		int v = (int)(c-'0');

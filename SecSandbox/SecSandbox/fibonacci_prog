@@ -8,10 +8,10 @@ PRT num1
 PRT num2
 SET cnt 2	// already output 2
 JPT loop
-ADD num2 num1	// make the next fibonacci
-PRT num2
-INC cnt
-SET tmp num1
-SET num1 num2
-SET num2 tmp	// swap num1 and num2 so as to compute the next fibonacci number in the next round
+	ADD num2 num1	// make the next fibonacci
+	PRT num2
+	INC cnt
+	SET tmp num1
+	SET num1 num2
+	SET num2 tmp	// swap num1 and num2 so as to compute the next fibonacci number in the next round
 JL loop cnt 10	// loop

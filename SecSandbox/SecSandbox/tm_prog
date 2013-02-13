@@ -34,21 +34,21 @@ SET curIndex 0
 SET i 0
 JPT lpState
 // for one state, read in its type, edge number and the edges and store them in the static edge array
-RD typeState
-RD numEdge
-SET state_type[i] typeState
-SET state_edgeidx[i] curIndex
-SET state_numedge[i] numEdge
-SET j 0
-JE 7 numEdge 0		// skip no edge state reading stage
-JPT lpStateEdge
-RD edge_rsym[curIndex]
-RD edge_wsym[curIndex]
-RD edge_targ[curIndex]
-INC curIndex
-INC j
-JL lpStateEdge j numEdge
-INC i
+	RD typeState
+	RD numEdge
+	SET state_type[i] typeState
+	SET state_edgeidx[i] curIndex
+	SET state_numedge[i] numEdge
+	SET j 0
+	JE 7 numEdge 0		// skip no edge state reading stage
+	JPT lpStateEdge
+		RD edge_rsym[curIndex]
+		RD edge_wsym[curIndex]
+		RD edge_targ[curIndex]
+		INC curIndex
+		INC j
+	JL lpStateEdge j numEdge
+	INC i
 JL lpState i numState
 DEALLOC i
 DEALLOC j
@@ -75,10 +75,10 @@ ALLOC i
 ALLOC j
 SET i 0
 JPT lpReadTape
-SET j i
-ADD j MID_TAPE
-RD tape[j]
-INC i
+	SET j i
+	ADD j MID_TAPE
+	RD tape[j]
+	INC i
 JL lpReadTape i lenTape
 DEALLOC i
 DEALLOC j
@@ -89,15 +89,14 @@ SET curTape startTape
 ALLOC curState	// current state
 SET curState startState
 
-ALLOC curIndex // index in the edge list
-ALLOC curSym // current symbol
-ALLOC numEdge
-ALLOC type // state type
 ALLOC i
 ALLOC j
-ALLOC nextState
-ALLOC nextSymbol
-
+ALLOC curIndex // index in the edge list
+ALLOC curSym // current symbol
+ALLOC numEdge // number of outward edges of a state
+ALLOC type // state type
+ALLOC nextState	// the trasition target state
+ALLOC nextSymbol // symbol to write out
 ALLOC left	// leftmost tape point
 ALLOC right // rightmost tape point
 SET left 0
@@ -109,50 +108,50 @@ ALLOC fail
 SET fail 0
 // check if we move out of range (memory only supports limited tape length)
 JPT noMem
-JE 3 fail 0	// skip no memory failure lines
-PRT -1
-EXIT
+	JE 3 fail 0	// skip no memory failure lines
+	PRT -1
+	EXIT
 
 JPT lpTM	// keep TM running
 
-JGE 3 curTape right // right side expanded	
-JL 6 curTape left	// left side expanded
-JMP 11				// skip tape filling
-JGE 6 curTape MAX_TAPE	// check if tape moves out of right bound
-SET right curTape
-INC right
-JMP 6				// skip left bound check
-JL 3 curTape 0			// check if tape moves out of left bound
-SET left curTape	
-JMP 3			// expand the tape
-SET fail 1		// we have no more memory to support tape
-JMP noMem
-SET tape[curTape] 0	// we are still in bound, then fill the expanded tape
+	JGE 3 curTape right // right side expanded	
+	JL 6 curTape left	// left side expanded
+	JMP 11				// skip tape filling
+	JGE 6 curTape MAX_TAPE	// check if tape moves out of right bound
+	SET right curTape
+	INC right
+	JMP 6				// skip left bound check
+	JL 3 curTape 0			// check if tape moves out of left bound
+	SET left curTape	
+	JMP 3			// expand the tape
+	SET fail 1		// we have no more memory to support tape
+	JMP noMem
+	SET tape[curTape] 0	// we are still in bound, then fill the expanded tape
 
-SET curIndex state_edgeidx[curState]
-SET numEdge state_numedge[curState]
-SET curSym tape[curTape]
+	SET curIndex state_edgeidx[curState]
+	SET numEdge state_numedge[curState]
+	SET curSym tape[curTape]
 
-JE 10 numEdge 0	// this state has no edge
-SET i 0
-JPT lpEdge
-SET j curIndex
-ADD j i
-SET nextState edge_targ[j]		// get the edge's target state
-SET nextSymbol edge_wsym[j]	// symbol to be written to tape
-JE 4 curSym edge_rsym[j]	// the current symbol matches
-INC i
-JL lpEdge i numEdge
-JMP 5						// no edge matches, we just move
-SET curState nextState		// symbol matches
-SET tape[curTape] nextSymbol
+	JE 10 numEdge 0	// this state has no edge
+	SET i 0
+	JPT lpEdge
+		SET j curIndex
+		ADD j i
+		SET nextState edge_targ[j]		// get the edge's target state
+		SET nextSymbol edge_wsym[j]	// symbol to be written to tape
+		JE 4 curSym edge_rsym[j]	// the current symbol matches
+		INC i
+	JL lpEdge i numEdge
+	JMP 5						// no edge matches, we just move
+	SET curState nextState		// symbol matches
+	SET tape[curTape] nextSymbol
 
-// no edge matches, just move
-SET type state_type[curState]
-JE 3 type 0
-INC curTape
+	// no edge matches, just move
+	SET type state_type[curState]
+	JE 3 type 0
+	INC curTape
 JNE lpTM curState endState	// TM runs until we reach the end state
-DEC curTape
+	DEC curTape
 JNE lpTM curState endState	// TM runs until we reach the end state
 
 DEALLOC curIndex
@@ -174,17 +173,17 @@ ALLOC l
 JE 15 numSeg 0
 SET i 0
 JPT lpOutSeg
-RD t		// read segment start
-RD l		// read segment length
-SET j t
-ADD j MID_TAPE	// middle adjustment
-ADD l t
-ADD l MID_TAPE
-JPT lpPrint
-PRT tape[j]
-INC j
-JL lpPrint j l
-INC i
+	RD t		// read segment start
+	RD l		// read segment length
+	SET j t
+	ADD j MID_TAPE	// middle adjustment
+	ADD l t
+	ADD l MID_TAPE
+	JPT lpPrint
+		PRT tape[j]
+		INC j
+	JL lpPrint j l
+	INC i
 JL lpOutSeg i numSeg
 
 // program ends
