@@ -65,6 +65,12 @@ void Sandbox::errAbort(ErrorType e){
 	case Error_JptDuplicated:
 		cout << "Jump point duplicated " << printLineInst(curInst) << endl;
 		break;
+	case Error_InvalidJump:
+		cout << "Jump exceeds program line range " << printLineInst(curInst) << endl;
+		break;
+	case Error_ProgramExit:
+		cout << "Program termination point reached " << printLineInst(curInst) << endl;
+		break;
 	default:
 		cout << "Unknown error" << endl;
 	}

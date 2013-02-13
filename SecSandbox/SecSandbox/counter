@@ -1,6 +1,0 @@
-ALLOC num
-SET num 10
-JPT loop
-PRT num
-DEC num
-JGE loop num 1

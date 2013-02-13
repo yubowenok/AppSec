@@ -19,15 +19,16 @@ void Sandbox::parse(){
 			// check ivec.size(): attempt to read a line that has not been processed yet
 			// read new line from program file
 
-			// encounters the end of the program, no more instructions, finish parsing
-			if(fp.eof()){
-				break;
-			}
-
 			// read a program line into the buffer
 			fp.getline(buf, BUFSIZE);
 			if(fp.fail()){
-				errAbort(Error_LineTooLong);
+				if(!fp.eof()) errAbort(Error_LineTooLong);	// if EOF not reached, we have a read-error line
+				else{
+					if(jmplineNum!=JUMPNCON && jmplineNum>lineNum){
+						errAbort(Error_InvalidJump);	// no more lines that fit the jump
+					}
+					break;	// else we encounter the end of the program normally, there are no more instructions and we finish parsing
+				}
 			}
 
 			pinst = new Inst(lineNum);
@@ -42,11 +43,17 @@ void Sandbox::parse(){
 			ss << pinst->text();
 		}
 
+		if(jmplineNum!=JUMPNCON && jmplineNum>lineNum){
+			// jump to a future line
+			lineNum ++;
+			continue;
+		}
+
 		// clear last instruction
 		nameinst = "";
 
 		// reset to no jump
-		jmplineNum = 0;	
+		jmplineNum = JUMPNCON;	
 
 		// set the current instruction to enable error logging
 		curInst = pinst;
@@ -56,7 +63,7 @@ void Sandbox::parse(){
 		removePrefixSpace(nameinst);
 		if(nameinst=="" || (nameinst.length()>=2 && nameinst.substr(0,2)=="//") ) pinst->setType(Inst_CMT);
 		else{
-			for(int i=0; i<nameinst.length(); i++){
+			for(unsigned int i=0; i<nameinst.length(); i++){
 				// change to upper case for instructions
 				char c = nameinst[i];
 				if(c>='a' && c<='z'){
@@ -64,6 +71,10 @@ void Sandbox::parse(){
 				}
 			}
 			pinst->setType(parseInst(nameinst));
+		}
+
+		if(debugMode){
+			cout << lineNum << " " << pinst->text() << endl;
 		}
 
 		// parse variables
@@ -138,7 +149,7 @@ void Sandbox::parse(){
 			break;
 		case Inst_JMP:
 			ss >> namejpt;
-			jump(namejpt);
+			jmplineNum = jump(namejpt, lineNum);
 			break;
 		case Inst_JE:
 			ss >> namejpt >> namevar1 >> namevar2;
@@ -146,7 +157,15 @@ void Sandbox::parse(){
 			pvar2 = getVar(namevar2);
 			pinst->setVar1(namevar1);
 			pinst->setVar2(namevar2);
-			jmplineNum = jumpe(namejpt, pvar1, pvar2);
+			jmplineNum = jumpe(namejpt, lineNum, pvar1, pvar2);
+			break;
+		case Inst_JNE:
+			ss >> namejpt >> namevar1 >> namevar2;
+			pvar1 = getVar(namevar1);
+			pvar2 = getVar(namevar2);
+			pinst->setVar1(namevar1);
+			pinst->setVar2(namevar2);
+			jmplineNum = jumpne(namejpt, lineNum, pvar1, pvar2);
 			break;
 		case Inst_JLE:
 			ss >> namejpt >> namevar1 >> namevar2;
@@ -154,7 +173,7 @@ void Sandbox::parse(){
 			pvar2 = getVar(namevar2);
 			pinst->setVar1(namevar1);
 			pinst->setVar2(namevar2);
-			jmplineNum = jumple(namejpt, pvar1, pvar2);
+			jmplineNum = jumple(namejpt, lineNum, pvar1, pvar2);
 			break;
 		case Inst_JL:
 			ss >> namejpt >> namevar1 >> namevar2;
@@ -162,7 +181,7 @@ void Sandbox::parse(){
 			pvar2 = getVar(namevar2);
 			pinst->setVar1(namevar1);
 			pinst->setVar2(namevar2);
-			jmplineNum = jumpl(namejpt, pvar1, pvar2);
+			jmplineNum = jumpl(namejpt, lineNum, pvar1, pvar2);
 			break;
 		case Inst_JGE:
 			ss >> namejpt >> namevar1 >> namevar2;
@@ -170,7 +189,7 @@ void Sandbox::parse(){
 			pvar2 = getVar(namevar2);
 			pinst->setVar1(namevar1);
 			pinst->setVar2(namevar2);
-			jmplineNum = jumpge(namejpt, pvar1, pvar2);
+			jmplineNum = jumpge(namejpt, lineNum, pvar1, pvar2);
 			break;
 		case Inst_JG:
 			ss >> namejpt >> namevar1 >> namevar2;
@@ -178,7 +197,7 @@ void Sandbox::parse(){
 			pvar2 = getVar(namevar2);
 			pinst->setVar1(namevar1);
 			pinst->setVar2(namevar2);
-			jmplineNum = jumpg(namejpt, pvar1, pvar2);
+			jmplineNum = jumpg(namejpt, lineNum, pvar1, pvar2);
 			break;
 		case Inst_PRT:
 			ss >> namevar1;
@@ -195,6 +214,9 @@ void Sandbox::parse(){
 			break;
 		case Inst_CMT:
 			break;
+		case Inst_EXIT:
+			errAbort(Error_ProgramExit);
+			break;
 		}
 
 		ss.getline(buf, BUFSIZE);	// read the rest of the line
@@ -205,11 +227,21 @@ void Sandbox::parse(){
 			parseComment(cmt);
 		}
 
-		if(jmplineNum){
-			// non-zero jump line number means a jump instruction has taken effect
-			lineNum = jmplineNum + 1;
+		if(jmplineNum!=JUMPNCON){
+			// a jump instruction has taken effect
+			if(jmplineNum<0){
+				errAbort(Error_InvalidJump);
+			}
+
+			if(maxLineNum<jmplineNum){
+				// jump to a future line, set to the nearest future line
+				lineNum = maxLineNum + 1;
+			}else{
+				// jump to a previous line, set to that previous line
+				lineNum = jmplineNum;
+			}
 		}else{
-			// no jump, just increase line number
+			// JUMPNCON means jump condition not satisfied, just increase line number
 			lineNum ++;
 		}
 	}
@@ -217,7 +249,7 @@ void Sandbox::parse(){
 
 // get a variable pointer
 Var *Sandbox::getVar(string name, int depth){
-
+	removePrefixSpace(name);
 	if(checkInteger(name)){
 		int val = parseInteger(name);
 		*pConst = val;
@@ -276,6 +308,7 @@ void Sandbox::checkValidName(string name){
 			}
 		}
 	}
+	if(name.length()>32) errAbort(Error_InvalidName);	// name too long
 }
 
 // parse comment
@@ -345,7 +378,7 @@ bool Sandbox::checkInteger(string str){
 
 // parse an integer
 int Sandbox::parseInteger(string str){
-	int ret = 0;
+	long long ret = 0;
 	bool neg = false;
 	int ie=0;
 	if(str[0]=='-'){
@@ -353,6 +386,7 @@ int Sandbox::parseInteger(string str){
 		ie = 1;
 	}
 	int b = 1;
+	if(str.length()>10) errAbort(Error_UnboundedNum); 
 	for(int i=str.length()-1; i>=ie; i--){
 		char c = str[i];
 		int v = (int)(c-'0');
@@ -361,12 +395,12 @@ int Sandbox::parseInteger(string str){
 		b*=10;
 	}
 	if(neg) ret = -ret;
-	return ret;
+	return (int)ret;
 }
 
 // remove prefix spaces and tabs in a string
 void Sandbox::removePrefixSpace(string &name){
-	int i;
+	unsigned int i;
 	for(i=0; i<name.length(); i++){
 		if(name[i]!=' ' && name[i]!='\t') break;
 	}

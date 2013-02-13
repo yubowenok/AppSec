@@ -14,10 +14,11 @@ enum InstType{
 	Inst_ADD, Inst_SUB, Inst_MUL, Inst_DIV,
 	Inst_INC, Inst_DEC,
 	Inst_JPT,
-	Inst_JMP, Inst_JE, Inst_JL, Inst_JLE, Inst_JG, Inst_JGE,
+	Inst_JMP, Inst_JE, Inst_JNE, Inst_JL, Inst_JLE, Inst_JG, Inst_JGE,
 	Inst_PRT,
 	Inst_RD,
-	Inst_CMT	// comment
+	Inst_CMT,	// comment
+	Inst_EXIT	// terminate
 };
 
 // instruction class

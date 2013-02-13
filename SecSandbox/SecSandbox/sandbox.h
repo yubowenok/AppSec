@@ -12,11 +12,12 @@
 
 using namespace std;
 
-#define MEMSIZE 65536
-#define BUFSIZE 257
-#define MAXINT 1000000000
-#define MAXLINE 100000
-#define MAXDEPTH 1000
+#define MEMSIZE		16384
+#define BUFSIZE		257
+#define MAXINT		1000000000
+#define MAXLINE		100000
+#define MAXDEPTH	1000
+#define JUMPNCON	200000
 
 class Sandbox{
 
@@ -24,6 +25,8 @@ public:
 	// data flag is initialized in constructor
 	Sandbox();
 
+	// set debug mode
+	void setDebugMode();
 	// set the program file stream
 	void setProg(char *file);
 	// set the data file stream
@@ -31,7 +34,8 @@ public:
 	// execute the sandbox
 	void exec();
 private:
-
+	// debug mode
+	bool debugMode;
 	// sandbox memory
 	int mem[MEMSIZE];
 	// memory count
@@ -111,15 +115,21 @@ private:
 	void dec(Var *pvar);
 
 	// jump
+	enum JumpType{
+		Jump_DIRECT = 0,
+		Jump_E, Jump_NE, Jump_G, Jump_GE, Jump_L, Jump_LE
+	};
 	// set jump point
 	void jumppoint(string name, int linenum);	
 	// conditional jump returns the line number being jumped to, 0 if condition not satisfied
-	int jump(string name);
-	int jumpe(string name, Var* pvar1, Var* pvar2);
-	int jumpg(string name, Var* pvar1, Var* pvar2);
-	int jumpge(string name, Var* pvar1, Var* pvar2);
-	int jumpl(string name, Var* pvar1, Var* pvar2);
-	int jumple(string name, Var* pvar1, Var* pvar2);
+	int universal_jump(string name, int linenum, JumpType type, Var* pvar1=NULL, Var* pvar2=NULL);
+	int jump(string name, int linenum){ return universal_jump(name, linenum, Jump_DIRECT); }
+	int jumpe(string name, int linenum, Var* pvar1, Var* pvar2){ return universal_jump(name, linenum, Jump_E, pvar1, pvar2); }
+	int jumpne(string name, int linenum, Var* pvar1, Var* pvar2){ return universal_jump(name, linenum, Jump_NE, pvar1, pvar2); }
+	int jumpg(string name, int linenum, Var* pvar1, Var* pvar2){ return universal_jump(name, linenum, Jump_G, pvar1, pvar2); }
+	int jumpge(string name, int linenum, Var* pvar1, Var* pvar2){ return universal_jump(name, linenum, Jump_GE, pvar1, pvar2); }
+	int jumpl(string name, int linenum, Var* pvar1, Var* pvar2){ return universal_jump(name, linenum, Jump_L, pvar1, pvar2); }
+	int jumple(string name, int linenum, Var* pvar1, Var* pvar2){ return universal_jump(name, linenum, Jump_LE, pvar1, pvar2); }
 
 	// print a variable onto the screen
 	void printv(Var *pvar);

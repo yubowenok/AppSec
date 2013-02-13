@@ -1,9 +1,15 @@
 #include "sandbox.h"
 #include <sstream>
 
-// data flag is initialized in constructor
+// data and debug flag is initialized in constructor
 Sandbox::Sandbox(){
 	hasData = false;
+	debugMode = false;
+}
+
+// set debug mode
+void Sandbox::setDebugMode(){
+	debugMode = true;
 }
 
 // set the program file stream

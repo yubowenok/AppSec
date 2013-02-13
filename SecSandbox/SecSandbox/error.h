@@ -25,7 +25,9 @@ enum ErrorType{
 	Error_NoData,
 	Error_MaxRecursive,
 	Error_JptNotFound,
-	Error_JptDuplicated
+	Error_JptDuplicated,
+	Error_InvalidJump,
+	Error_ProgramExit
 };
 
 

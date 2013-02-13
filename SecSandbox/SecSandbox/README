@@ -1,0 +1,16 @@
+To compile the sandbox, simply use:
+
+make
+
+To run the sandbox, execute the sandbox with 2 args:
+
+./sandbox argprog argdata
+
+argprog is the name of the program file
+argdata is the name of the data file (optional arg)
+
+
+To run the example program:
+
+./sandbox couter
+./sandbox fibonacci

@@ -30,11 +30,13 @@ void Sandbox::initInstMap(){
 	imap.insert(make_pair("JPT", Inst_JPT));
 	imap.insert(make_pair("JMP", Inst_JMP));
 	imap.insert(make_pair("JE", Inst_JE));
+	imap.insert(make_pair("JNE", Inst_JNE));
 	imap.insert(make_pair("JL", Inst_JL));
 	imap.insert(make_pair("JLE", Inst_JLE));
 	imap.insert(make_pair("JG", Inst_JG));
 	imap.insert(make_pair("JGE", Inst_JGE));
 	imap.insert(make_pair("PRT", Inst_PRT));
 	imap.insert(make_pair("RD", Inst_RD));
-	imap.insert(make_pair("//", Inst_CMT));
+	//imap.insert(make_pair("//", Inst_CMT));
+	imap.insert(make_pair("EXIT", Inst_EXIT));
 }
