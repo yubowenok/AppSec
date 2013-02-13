@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
 	}
 	// set program and data file
 	box.setProg(pprog);
-	box.setData(pdata);
+	if(pdata!=NULL) box.setData(pdata);
 
 	// execute the sandbox
 	box.exec();

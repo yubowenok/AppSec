@@ -50,7 +50,8 @@ The sandbox reads a customized, simplified coding language that is similar to th
 \label{sec:usage}
 \subsection{Running the Sandbox}
 To compile the sandbox, simply do {\tt make} under the sandbox directory in the terminal.\\
-To run the sandbox, execute the executable file by {\tt ./SandBox arg1 arg2}, where {\tt arg1} is the name of the script file and {\tt arg2} is the name of the data file. Note that {\tt arg2} can be omitted when the program does not need a data file.\\
+To run the sandbox, execute the executable file by {\tt ./sandbox arg1 arg2}, where {\tt arg1} is the name of the script file and {\tt arg2} is the name of the data file. Note that {\tt arg2} can be omitted when the program does not need a data file.\\
+You may also run the sandbox using debug mode as {\tt ./sandbox -d arg1 arg2}. In debug mode, the sandbox will print out every executed line with its line number.
 
 \subsection{Sandbox Variables}
 The variables in the sandbox can be single variables or elements of an array. Single variables are referenced by variable names and array elements are referenced by array names plus brackets and element indices, e.g. {\tt myVar[5]}. If the index (numbered from 0) exceeds the array length, the program will stop and report error. You may also embed variables and arrays in the array brackets as the array index, e.g. {\tt a[b[2]]}, as long as the variables that are used for the index already exist. For this case, the sandbox implements a recursive interpretation of array expression and has a maximum recursive reference level of 1000. The total memory required for all variables and arrays shall not exceed the memory limit, otherwise the program will report error and exit.
