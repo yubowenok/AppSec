@@ -71,9 +71,7 @@ private:
 
 	// initialize
 	void init();
-	// run the program
-	void run(){}
-	// parse the program
+	// parse & run the program
 	void parse();
 	// clean up when sandbox terminates
 	void cleanUp();

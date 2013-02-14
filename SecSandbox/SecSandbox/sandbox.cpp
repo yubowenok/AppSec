@@ -88,10 +88,8 @@ int Sandbox::readData(){
 void Sandbox::exec(){
 	// initialize sandbox
 	init();
-	// parse the program
+	// parse & run the program
 	parse();
-	// run the program
-	run();
 	// cleanup after sandbox terminates
 	cleanUp();
 	// program terminates without errors

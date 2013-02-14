@@ -270,10 +270,12 @@ Var *Sandbox::getVar(string name, int depth){
 	if((rv=vmap.find(name))==vmap.end()){
 		errAbort(Error_VarNotFound);
 	}
+	Var *v = (*rv).second;
 	if(isArray){
-		Var *v = (*rv).second;
 		if(offset>=v->len()) errAbort(Error_IndexOutOfRange);	// array index out of range
-		((*rv).second)->setArrayindex(offset);
+		v->setArrayindex(offset);
+	}else{
+		if(v->len()>1) errAbort(Error_InvalidArray);
 	}
 	return (*rv).second;
 }

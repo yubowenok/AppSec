@@ -74,5 +74,5 @@ There would be a lot of tedious details to explain the whole TM program. But the
 Necessary comments have been added to the program file to help better understanding. 
 
 \section{Error Handling}
-Note that the TM program is not responsible for any data errors. If you are going to write a TM data file, you need to make sure that the data file follows the TM data format described above. However, the sandbox is responsible for handling any errors a misbehaving program may cause. For example, if the array index the TM is trying to access is out of range, the sandbox will detect it and stops the TM program.
+Note that the TM program is not responsible for any data errors. If you are going to write a TM data file, you need to make sure that the data file follows the TM data format described above. You also need to ensure the DFA in your data is valid. However, the sandbox is responsible for handling any errors a misbehaving program may cause. For example, if the array index the TM is trying to access is out of range, the sandbox will detect it and stop the TM program.
 \end{document}
